@@ -2,9 +2,9 @@
   "name": "rutta",
   "version": "1.0.1",
   "description": "Rutta a browser side router.",
-  "main": "index.js",
+  "main": "src/rutta.b.m.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": ""
   },
   "repository": {
     "type": "git",

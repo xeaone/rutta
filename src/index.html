@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Rutta</title>
+	<script src="/rutta.js"></script>
+</head>
+<body>
+
+	<ul>
+		<li><a href="/page">Page</a></li>
+	</ul>
+
+	<div r-view="main"></div>
+
+	<script>
+		var options = {
+			name: 'main',
+			// mode: Rutta.HASH,
+			// root: '/#/',
+			routes: [
+				{
+					path: '/',
+					title: 'Home',
+					handler: function (req, res) {
+						return res.content('<h1>home</h1>');
+					}
+				},
+				{
+					path: '/page',
+					title: 'Page',
+					handler: function (req, res) {
+						return res.content('<h1>page</h1>');
+					}
+				}
+			],
+		};
+
+		Rutta.router(options).listen();
+
+	</script>
+
+</body>
+</html>

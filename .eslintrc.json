@@ -7,6 +7,9 @@
 	"globals": {
 		"Rutta": true
 	},
+	"parserOptions": {
+		"sourceType": "module"
+	},
 	"rules": {
 		"no-undef": 1,
 		"no-console": 0,
