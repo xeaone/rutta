@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Rutta</title>
+	<!-- <title>Rutta</title> -->
 	<script src="/rutta.js"></script>
 </head>
 <body>
 
 	<ul>
-		<li><a href="/page">Page</a></li>
+		<li><a href="/">/</a></li>
+		<li><a href="/page">/Page</a></li>
+		<li><a href="/page/">/Page/</a></li>
+		<li><a href="/page?foo=bar">/Page?foo=bar</a></li>
+		<li><a href="/page#foo">/Page#foo</a></li>
 	</ul>
 
 	<div r-view="main"></div>
@@ -15,8 +19,7 @@
 	<script>
 		var options = {
 			name: 'main',
-			// mode: Rutta.HASH,
-			// root: '/#/',
+			html5: false,
 			routes: [
 				{
 					path: '/',
@@ -24,18 +27,28 @@
 					handler: function (req, res) {
 						return res.content('<h1>home</h1>');
 					}
-				},
-				{
-					path: '/page',
-					title: 'Page',
-					handler: function (req, res) {
-						return res.content('<h1>page</h1>');
-					}
 				}
-			],
+			]
 		};
 
-		Rutta.router(options).listen();
+		var route = [
+			{
+				path: '/page',
+				title: 'Page',
+				handler: function (req, res) {
+					return res.content('<h1>page</h1>');
+				}
+			},
+			{
+				path: '/extract',
+				title: 'Extract',
+				handler: function (req, res) {
+					return res.content('<h1>Extract</h1>');
+				}
+			},
+		];
+
+		Rutta.router(options).add(route).remove('/extract').listen();
 
 	</script>
 
