@@ -58,11 +58,12 @@ function Router (options) {
 	this._base = this._html5 ? '/' : '/#/';
 	this._base = options.base ? options.base + this._base : this._base;
 
-	this._permitChangeEvent = true;
-	this._state = options.state || {};
+	this.state = options.state || {};
 	this._routes = options.routes || [];
 	this._redirects = options.redirects || [];
 	this._query = options.query || '[r-view="'+ this.name +'"]';
+
+	this._permitChangeEvent = true;
 }
 
 Router.prototype.isOrigin = function (path) {
@@ -168,30 +169,30 @@ Router.prototype.show = function (state) {
 Router.prototype.navigate = function (state, type) {
 	var self = this;
 
-	self._state.title = state.title ? state.title : '';
-	self._state.path = state.path ? self._base + clean(state.path) : self._base;
+	self.state.title = state.title ? state.title : '';
+	self.state.path = state.path ? self._base + clean(state.path) : self._base;
 
 	if (self._html5) {
-		if (type === PUSH) window.history.pushState(self._state, self._state.title, self._state.path);
-		if (type === REPLACE) window.history.replaceState(self._state, self._state.title, self._state.path);
+		if (type === PUSH) window.history.pushState(self.state, self.state.title, self.state.path);
+		if (type === REPLACE) window.history.replaceState(self.state, self.state.title, self.state.path);
 	} else if (!self._html5) {
 		self._permitChangeEvent = false;
-		window.location.hash = self._state.path.replace(/^\//, '');
+		window.location.hash = self.state.path.replace(/^\//, '');
 	}
 
-	// self._state.host = window.location.host;
-	// self._state.hash = window.location.hash;
-	// self._state.hostname = window.location.hostname;
-	// self._state.href = window.location.href;
-	// self._state.origin = window.location.origin;
-	// self._state.pathname = window.location.pathname;
-	// self._state.port = window.location.port;
-	// self._state.protocol = window.location.protoco;
+	// self.state.host = window.location.host;
+	// self.state.hash = window.location.hash;
+	// self.state.hostname = window.location.hostname;
+	// self.state.href = window.location.href;
+	// self.state.origin = window.location.origin;
+	// self.state.pathname = window.location.pathname;
+	// self.state.port = window.location.port;
+	// self.state.protocol = window.location.protoco;
 	//
-	// if (!self._html5) self._state.hash = self._state.hash.replace(/^#\/(.*?)#/, '#');
-	// // if (!self._html5) self._state.pathname = // TODO FIXME
+	// if (!self._html5) self.state.hash = self.state.hash.replace(/^#\/(.*?)#/, '#');
+	// // if (!self._html5) self.state.pathname = // TODO FIXME
 
-	self.show(self._state);
+	self.show(self.state);
 
 	return self;
 };
@@ -245,7 +246,7 @@ Router.prototype.listen = function () {
 		e.preventDefault();
 
 		// check for same path
-		if (self.isSame(state.path, self._state.path) === true) return;
+		if (self.isSame(state.path, self.state.path) === true) return;
 
 		self.navigate(state, PUSH);
 	}, false);
