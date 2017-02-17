@@ -1,107 +1,50 @@
 /*
-	Title: Rutta
-	Version: 1.0.0
-	Author: Alexander Elias
-
-	TODO
-		- hash not routing
-		- test add remove
-		- write readme
-		- test nested instance
+	@preserve
+	title: rutta
+	version: 1.0.3
+	author: alexander elias
 */
+
+import Utility from './ignore/utility.js';
+import Render from './ignore/render.js';
+import Request from './ignore/request.js';
+import Response from './ignore/response.js';
 
 var PUSH = 2;
 var REPLACE = 3;
-var ORIGIN = document.location.origin;
-
-function has (string, search) {
-	return string.indexOf(search) !== -1;
-}
-
-function clean (path) {
-	return decodeURI(path).trim()
-	.replace(ORIGIN, '')
-	.replace(/(^\/#\/)|(^#\/)|(^\/)/g, '')
-	.replace(/(\/$)/, '');
-}
-
-function strip (path) {
-	return decodeURI(path).trim()
-	.replace(ORIGIN, '')
-	.replace(/(^\/#\/)|(^#\/)|(^\/)/g, '')
-	.replace(/(\?.*?)$/, '')
-	.replace(/(#.*?)$/, '')
-	.replace(/(\/$)/, '');
-}
-
-// function join () {
-// 	var paths = '', path = '';
-//
-// 	for (var i = 0, l = arguments.length; i < l; i++) {
-// 		path = clean(arguments[i]);
-// 		if (path !== '' && i !== l-1) path += '/';
-// 		paths += path;
-// 	}
-//
-// 	return paths;
-// }
+var MODE = 'history' in window && 'pushState' in window.history;
 
 function Router (options) {
-
 	this.name = options.name;
 
-	this._isHistory = 'history' in window && 'pushState' in window.history;
+	this.routes = options.routes || [];
+	this.redirects = options.redirects || [];
+	this.query = options.query || '[r-view="'+ this.name +'"]';
 
-	this._html5 = options.html5 === null || options.html5 === undefined ? true : options.html5;
-	this._html5 = this._isHistory ? this._html5 : false;
-
-	this._base = this._html5 ? '/' : '/#/';
-	this._base = options.base ? options.base + this._base : this._base;
-
+	this.isListening = false;
+	this.permitChangeEvent = true;
 	this.state = options.state || {};
-	this._routes = options.routes || [];
-	this._redirects = options.redirects || [];
-	this._query = options.query || '[r-view="'+ this.name +'"]';
+	this.location = document.location;
 
-	this._permitChangeEvent = true;
+	this.mode = options.mode === null || options.mode === undefined ? MODE : options.mode;
+	this.root = options.root === null || options.root === undefined ? (this.mode ? '/' : '#/') : options.root;
 }
 
-Router.prototype.isOrigin = function (path) {
-	return path && path.indexOf(ORIGIN) === 0;
+Router.prototype.isSameOrigin = function (path) {
+	return path && path.indexOf(document.location.origin) > -1;
 };
 
-Router.prototype.isSame = function (p1, p2) {
-	return p1 && p2 && clean(p1) === clean(p2);
-};
-
-Router.prototype.request = function (data) {
-	return new function () {
-		this.route = data.route;
-		this.state = data.state;
-	};
-};
-
-Router.prototype.response = function (data) {
-	var self = this;
-
-	return new function () {
-		this.content = function (content) {
-			document.title = data.route.title || '';
-			document.querySelector(self._query).innerHTML = content;
-		};
-		this.redirect = function (path) {
-			window.location = path;
-		};
-	};
+Router.prototype.isSamePath = function (pathOne, pathTwo) {
+	return Utility.clean(pathOne || '') === Utility.clean(pathTwo || '');
 };
 
 Router.prototype.add = function (route) {
 	var self = this;
 
 	if (route.constructor.name === 'Object') {
-		self._routes.push(route);
+		self.routes.push(route);
 	} else if (route.constructor.name === 'Array') {
-		self._routes = self._routes.concat(route);
+		self.routes = self.routes.concat(route);
 	}
 
 	return self;
@@ -110,11 +53,11 @@ Router.prototype.add = function (route) {
 Router.prototype.remove = function (path) {
 	var self = this;
 
-	for (var i = 0, l = self._routes.length; i < l; i++) {
-		var route = self._routes[i];
+	for (var i = 0, l = self.routes.length; i < l; i++) {
+		var route = self.routes[i];
 
 		if (path === route.path) {
-			self._routes.splice(i, 1);
+			self.routes.splice(i, 1);
 			break;
 		}
 	}
@@ -122,77 +65,58 @@ Router.prototype.remove = function (path) {
 	return self;
 };
 
-Router.prototype.redirect = function (redirect) {
+Router.prototype.get = function (path) {
 	var self = this;
 
-	if (redirect.constructor.name === 'Object') {
-		self._redirects.push(redirect);
-	} else if (redirect.constructor.name === 'Array') {
-		self.redirect = self._redirects.concat(redirect);
-	}
-
-	return self;
-};
-
-Router.prototype.unredirect = function (redirect) {
-	var self = this;
-
-	for (var i = 0, l = self._redirects.length; i < l; i++) {
-		if (redirect.from === self._redirects[i].from && redirect.to === self._redirects[i].to) {
-			self._redirects.splice(i, 1);
-			break;
-		}
-	}
-
-	return self;
-};
-
-Router.prototype.show = function (state) {
-	var self = this;
-
-	var path = '/' + strip(state.path || '');
-	var length = self._routes.length;
+	var length = self.routes.length;
 	var route = null;
 	var index = 0;
 
+	path = Utility.strip(path);
+
 	for (index; index < length; index++) {
-		route = self._routes[index];
-		if (path === route.path) {
-			var data = { state: state, route: route };
-			return route.handler(self.request(data), self.response(data));
+		route = self.routes[index];
+		if (typeof route.path === 'string') {
+			if (route.path === path || route.path === '/' + path) {
+				return route;
+			}
+		} else if (route.path.test(path)) {
+			return route;
 		}
 	}
-
-	return self;
 };
 
 Router.prototype.navigate = function (state, type) {
 	var self = this;
 
-	self.state.title = state.title ? state.title : '';
-	self.state.path = state.path ? self._base + clean(state.path) : self._base;
+	var route = self.get(state.path);
 
-	if (self._html5) {
+	self.state.title = route && route.title ? route.title : state.title;
+	self.state.path = self.mode ? self.root + Utility.clean(state.path) : self.root + Utility.clean(state.path);
+
+	if (self.mode) {
 		if (type === PUSH) window.history.pushState(self.state, self.state.title, self.state.path);
 		if (type === REPLACE) window.history.replaceState(self.state, self.state.title, self.state.path);
-	} else if (!self._html5) {
-		self._permitChangeEvent = false;
-		window.location.hash = self.state.path.replace(/^\//, '');
+	} else {
+		self.permitChangeEvent = false;
+		window.location.hash = self.state.path;
 	}
 
-	// self.state.host = window.location.host;
-	// self.state.hash = window.location.hash;
-	// self.state.hostname = window.location.hostname;
-	// self.state.href = window.location.href;
-	// self.state.origin = window.location.origin;
-	// self.state.pathname = window.location.pathname;
-	// self.state.port = window.location.port;
-	// self.state.protocol = window.location.protoco;
-	//
-	// if (!self._html5) self.state.hash = self.state.hash.replace(/^#\/(.*?)#/, '#');
-	// // if (!self._html5) self.state.pathname = // TODO FIXME
+	if (route) {
+		var data = {
+			route: route,
+			state: this.state,
+			query: this.query,
+			href: document.location.href,
+			hash: Utility.getHash(this.href),
+			search: Utility.getSearch(this.href),
+			pathname: Utility.getPathname(this.href)
+		};
 
-	self.show(self.state);
+		route.handler(Request(data), Response(data));
+	} else {
+		Render.text({ query: this.query });
+	}
 
 	return self;
 };
@@ -200,21 +124,24 @@ Router.prototype.navigate = function (state, type) {
 Router.prototype.listen = function () {
 	var self = this;
 
+	if (self.isListening) return self;
+	else self.isListening = true;
+
 	window.addEventListener('DOMContentLoaded', function () {
 		var state = { title: document.title, path: document.location.href };
 		self.navigate(state, REPLACE);
 	}, false);
 
-	window.addEventListener(self._html5 ? 'popstate' : 'hashchange', function (e) {
-		if (self._permitChangeEvent) {
+	window.addEventListener(self.mode ? 'popstate' : 'hashchange', function (e) {
+		if (self.permitChangeEvent) {
 			var state = {};
 
-			if (self._html5) state = e.state || {};
+			if (self.mode) state = e.state || {};
 			else state = { path: e.newURL };
 
 			self.navigate(state);
 		} else {
-			self._permitChangeEvent = true;
+			self.permitChangeEvent = true;
 		}
 	}, false);
 
@@ -235,18 +162,18 @@ Router.prototype.listen = function () {
 		};
 
 		// check non acceptable href
-		if (has(state.path, 'mailto:')) return;
-		if (has(state.path, 'tel:')) return;
-		if (has(state.path, 'file:')) return;
-		if (has(state.path, 'ftp:')) return;
+		if (Utility.has(state.path, 'mailto:')) return;
+		if (Utility.has(state.path, 'tel:')) return;
+		if (Utility.has(state.path, 'file:')) return;
+		if (Utility.has(state.path, 'ftp:')) return;
 
 		// check non acceptable origin
-		if (!self.isOrigin(state.path)) return;
+		if (!self.isSameOrigin(state.path)) return;
 
 		e.preventDefault();
 
 		// check for same path
-		if (self.isSame(state.path, self.state.path) === true) return;
+		if (self.isSamePath(state.path, self.state.path)) return;
 
 		self.navigate(state, PUSH);
 	}, false);
@@ -254,26 +181,15 @@ Router.prototype.listen = function () {
 	return self;
 };
 
-if (!window.Rutta) {
-	window.Rutta = {
-		routers: {},
-		router: function (name, options) {
+var Rutta = {
+	routers: {},
+	router: function (options) {
+		// if (!options.name) options.name = Object.keys(this.routers).length.toString();
+		if (!options.name) throw new Error('Router - name parameter required');
+		if (this.routers[options.name]) throw new Error('Router - name ' + options.name + ' exists');
+		this.routers[options.name] = new Router(options);
+		return this.routers[options.name];
+	}
+};
 
-			if (!options && typeof name === 'object') {
-				options = name;
-				name = null;
-			} else {
-				options = options || {};
-				options.name = name;
-			}
-
-			if (!options.name) throw new Error('Router - name parameter required');
-			if (this.routers[options.name]) throw new Error('Router - ' + options.name + ' already exists');
-
-			var router = new Router(options);
-			this.routers[options.name] = router;
-			return router;
-		}
-
-	};
-}
+export default Rutta;

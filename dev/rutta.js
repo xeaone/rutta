@@ -1,109 +1,253 @@
-(function () {
-	'use strict';
-
-	/*
-		Title: Rutta
-		Version: 1.0.0
-		Author: Alexander Elias
-
-		TODO
-			- hash not routing
-			- test add remove
-			- write readme
-			- test nested instance
-	*/
-
-	var PUSH = 2;
-	var REPLACE = 3;
-	var ORIGIN = document.location.origin;
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define('Rutta', factory) :
+	(global.Rutta = factory());
+}(this, (function () { 'use strict';
 
 	function has (string, search) {
 		return string.indexOf(search) !== -1;
 	}
 
-	function clean (path) {
-		return decodeURI(path).trim()
-		.replace(ORIGIN, '')
-		.replace(/(^\/#\/)|(^#\/)|(^\/)/g, '')
+	function clean (s) {
+		return decodeURI(s)
+		.replace(document.location.origin, '')
+		.replace(/(^\/?#?\/)/, '')
 		.replace(/(\/$)/, '');
 	}
 
-	function strip (path) {
-		return decodeURI(path).trim()
-		.replace(ORIGIN, '')
-		.replace(/(^\/#\/)|(^#\/)|(^\/)/g, '')
-		.replace(/(\?.*?)$/, '')
-		.replace(/(#.*?)$/, '')
-		.replace(/(\/$)/, '');
+	function strip (s) {
+		return clean(s).replace(/(\?.*?$)|(#.*?$)/g, '');
 	}
 
-	// function join () {
-	// 	var paths = '', path = '';
-	//
-	// 	for (var i = 0, l = arguments.length; i < l; i++) {
-	// 		path = clean(arguments[i]);
-	// 		if (path !== '' && i !== l-1) path += '/';
-	// 		paths += path;
-	// 	}
-	//
-	// 	return paths;
-	// }
-
-	function Router (options) {
-
-		this.name = options.name;
-
-		this._isHistory = 'history' in window && 'pushState' in window.history;
-
-		this._html5 = options.html5 === null || options.html5 === undefined ? true : options.html5;
-		this._html5 = this._isHistory ? this._html5 : false;
-
-		this._base = this._html5 ? '/' : '/#/';
-		this._base = options.base ? options.base + this._base : this._base;
-
-		this._permitChangeEvent = true;
-		this._state = options.state || {};
-		this._routes = options.routes || [];
-		this._redirects = options.redirects || [];
-		this._query = options.query || '[r-view="'+ this.name +'"]';
+	function getSearch (s) {
+		return clean(s).split('?')[1] || '';
 	}
 
-	Router.prototype.isOrigin = function (path) {
-		return path && path.indexOf(ORIGIN) === 0;
+	function getHash (s) {
+		return clean(s).split('?')[0].split('#')[1] || '';
+	}
+
+	function getPathname (s) {
+		return clean(s).split('?')[0].split('#')[0] || '';
+	}
+
+	var Utility = {
+		has: has,
+		clean: clean,
+		strip: strip,
+		getSearch: getSearch,
+		getHash: getHash,
+		getPathname: getPathname
 	};
 
-	Router.prototype.isSame = function (p1, p2) {
-		return p1 && p2 && clean(p1) === clean(p2);
+	var Render = {
+		html: function (data) {
+			data = data || {};
+			document.title = data.title || '';
+			document.querySelector(data.query).innerHTML = data.content || '';
+		},
+		text: function (data) {
+			data = data || {};
+			document.title = data.title || '';
+			document.querySelector(data.query).innerText = data.content || '';
+		}
 	};
 
-	Router.prototype.request = function (data) {
-		return new function () {
-			this.route = data.route;
-			this.state = data.state;
+	function Request (data) {
+		this.route = data.route;
+		this.state = data.state;
+	}
+
+	function Request$1 (data) {
+		return new Request(data);
+	}
+
+	/*
+		@preserve
+		title: axa
+		version: 1.0.5
+		author: Alexander Elias
+		descript: Axa a low level Ajax Xhr library.
+	*/
+
+	var mime = {
+		script: 'text/javascript, application/javascript, application/x-javascript',
+		json: 'application/json, text/javascript',
+		xml: 'application/xml, text/xml',
+		html: 'text/html',
+		text: 'text/plain',
+		urlencoded: 'application/x-www-form-urlencoded'
+	};
+
+	function serialize (data) {
+		var string = '';
+
+		for (var name in data) {
+			string = string.length > 0 ? string + '&' : string;
+			string = string + encodeURIComponent(name) + '=' + encodeURIComponent(data[name]);
+		}
+
+		return string;
+	}
+
+	function request (options) {
+		if (!options) throw new Error('Axa: requires options');
+		if (!options.action) throw new Error('Axa: requires options.action');
+		if (!options.method) options.method = 'GET';
+		if (!options.headers) options.headers = {};
+
+		if (options.data) {
+			if (options.method === 'GET') {
+				options.action = options.action + '?' + serialize(options.data);
+				options.data = null;
+			} else {
+				options.requestType = options.requestType.toLowerCase();
+				options.responseType = options.responseType.toLowerCase();
+
+				switch (options.requestType) {
+					case 'script': options.contentType = mime.script; break;
+					case 'json': options.contentType = mime.json; break;
+					case 'xml': options.contentType = mime.xm; break;
+					case 'html': options.contentType = mime.html; break;
+					case 'text': options.contentType = mime.text; break;
+					default: options.contentType = mime.urlencoded;
+				}
+
+				switch (options.responseType) {
+					case 'script': options.accept = mime.script; break;
+					case 'json': options.accept = mime.json; break;
+					case 'xml': options.accept = mime.xml; break;
+					case 'html': options.accept = mime.html; break;
+					case 'text': options.accept = mime.text; break;
+				}
+
+				if (options.contentType === mime.json) options.data = JSON.stringify(options.data);
+				if (options.contentType === mime.urlencoded) options.data = serialize(options.data);
+			}
+		}
+
+		var xhr = new XMLHttpRequest();
+		xhr.open(options.method.toUpperCase(), options.action, true, options.username, options.password);
+
+		if (options.mimeType) xhr.overrideMimeType(options.mimeType);
+		if (options.withCredentials) xhr.withCredentials = options.withCredentials;
+
+		if (options.accept) options.headers['Accept'] = options.accept;
+		if (options.contentType) options.headers['Content-Type'] = options.contentType;
+
+		if (options.headers) {
+			for (var name in options.headers) {
+				xhr.setRequestHeader(name, options.headers[name]);
+			}
+		}
+
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4) {
+				if (xhr.status >= 200 && xhr.status < 400) {
+					return options.success(xhr);
+				} else {
+					return options.error(xhr);
+				}
+			}
 		};
+
+		xhr.send(options.data);
+	}
+
+	var Axa = {
+		mime: mime,
+		request: request,
+		serialize: serialize
 	};
 
-	Router.prototype.response = function (data) {
+	function Response (data) {
+		this.query = data.query;
+		this.route = data.route;
+	}
+
+	Response.prototype.content = function (content) {
 		var self = this;
 
-		return new function () {
-			this.content = function (content) {
-				document.title = data.route.title || '';
-				document.querySelector(self._query).innerHTML = content;
-			};
-			this.redirect = function (path) {
-				window.location = path;
-			};
-		};
+		Render.html({
+			query: self.query,
+			title: self.route.title,
+			content: content
+		});
+	};
+
+	Response.prototype.file = function (path) {
+		var self = this;
+
+		Axa.request({
+			action: path,
+			responseType: 'html',
+			success: function (xhr) {
+				Render.html({
+					query: self.query,
+					title: self.route.title,
+					content: xhr.response
+				});
+			},
+			error: function (xhr) {
+				Render.text({
+					query: self.query,
+					title: self.route.title,
+					content: xhr.response
+				});
+			}
+		});
+	};
+
+	Response.prototype.redirect = function (path) {
+		window.location = path;
+	};
+
+	function Response$1 (data) {
+		return new Response(data);
+	}
+
+	/*
+		@preserve
+		title: rutta
+		version: 1.0.3
+		author: alexander elias
+	*/
+
+	var PUSH = 2;
+	var REPLACE = 3;
+	var MODE = 'history' in window && 'pushState' in window.history;
+
+	function Router (options) {
+		this.name = options.name;
+
+		this.routes = options.routes || [];
+		this.redirects = options.redirects || [];
+		this.query = options.query || '[r-view="'+ this.name +'"]';
+
+		this.isListening = false;
+		this.permitChangeEvent = true;
+		this.state = options.state || {};
+		this.location = document.location;
+
+		this.mode = options.mode === null || options.mode === undefined ? MODE : options.mode;
+		this.root = options.root === null || options.root === undefined ? (this.mode ? '/' : '#/') : options.root;
+	}
+
+	Router.prototype.isSameOrigin = function (path) {
+		return path && path.indexOf(document.location.origin) > -1;
+	};
+
+	Router.prototype.isSamePath = function (pathOne, pathTwo) {
+		return Utility.clean(pathOne || '') === Utility.clean(pathTwo || '');
 	};
 
 	Router.prototype.add = function (route) {
 		var self = this;
 
 		if (route.constructor.name === 'Object') {
-			self._routes.push(route);
+			self.routes.push(route);
 		} else if (route.constructor.name === 'Array') {
-			self._routes = self._routes.concat(route);
+			self.routes = self.routes.concat(route);
 		}
 
 		return self;
@@ -112,11 +256,11 @@
 	Router.prototype.remove = function (path) {
 		var self = this;
 
-		for (var i = 0, l = self._routes.length; i < l; i++) {
-			var route = self._routes[i];
+		for (var i = 0, l = self.routes.length; i < l; i++) {
+			var route = self.routes[i];
 
 			if (path === route.path) {
-				self._routes.splice(i, 1);
+				self.routes.splice(i, 1);
 				break;
 			}
 		}
@@ -124,77 +268,58 @@
 		return self;
 	};
 
-	Router.prototype.redirect = function (redirect) {
+	Router.prototype.get = function (path) {
 		var self = this;
 
-		if (redirect.constructor.name === 'Object') {
-			self._redirects.push(redirect);
-		} else if (redirect.constructor.name === 'Array') {
-			self.redirect = self._redirects.concat(redirect);
-		}
-
-		return self;
-	};
-
-	Router.prototype.unredirect = function (redirect) {
-		var self = this;
-
-		for (var i = 0, l = self._redirects.length; i < l; i++) {
-			if (redirect.from === self._redirects[i].from && redirect.to === self._redirects[i].to) {
-				self._redirects.splice(i, 1);
-				break;
-			}
-		}
-
-		return self;
-	};
-
-	Router.prototype.show = function (state) {
-		var self = this;
-
-		var path = '/' + strip(state.path || '');
-		var length = self._routes.length;
+		var length = self.routes.length;
 		var route = null;
 		var index = 0;
 
+		path = Utility.strip(path);
+
 		for (index; index < length; index++) {
-			route = self._routes[index];
-			if (path === route.path) {
-				var data = { state: state, route: route };
-				return route.handler(self.request(data), self.response(data));
+			route = self.routes[index];
+			if (typeof route.path === 'string') {
+				if (route.path === path || route.path === '/' + path) {
+					return route;
+				}
+			} else if (route.path.test(path)) {
+				return route;
 			}
 		}
-
-		return self;
 	};
 
 	Router.prototype.navigate = function (state, type) {
 		var self = this;
 
-		self._state.title = state.title ? state.title : '';
-		self._state.path = state.path ? self._base + clean(state.path) : self._base;
+		var route = self.get(state.path);
 
-		if (self._html5) {
-			if (type === PUSH) window.history.pushState(self._state, self._state.title, self._state.path);
-			if (type === REPLACE) window.history.replaceState(self._state, self._state.title, self._state.path);
-		} else if (!self._html5) {
-			self._permitChangeEvent = false;
-			window.location.hash = self._state.path.replace(/^\//, '');
+		self.state.title = route && route.title ? route.title : state.title;
+		self.state.path = self.mode ? self.root + Utility.clean(state.path) : self.root + Utility.clean(state.path);
+
+		if (self.mode) {
+			if (type === PUSH) window.history.pushState(self.state, self.state.title, self.state.path);
+			if (type === REPLACE) window.history.replaceState(self.state, self.state.title, self.state.path);
+		} else {
+			self.permitChangeEvent = false;
+			window.location.hash = self.state.path;
 		}
 
-		// self._state.host = window.location.host;
-		// self._state.hash = window.location.hash;
-		// self._state.hostname = window.location.hostname;
-		// self._state.href = window.location.href;
-		// self._state.origin = window.location.origin;
-		// self._state.pathname = window.location.pathname;
-		// self._state.port = window.location.port;
-		// self._state.protocol = window.location.protoco;
-		//
-		// if (!self._html5) self._state.hash = self._state.hash.replace(/^#\/(.*?)#/, '#');
-		// // if (!self._html5) self._state.pathname = // TODO FIXME
+		if (route) {
+			var data = {
+				route: route,
+				state: this.state,
+				query: this.query,
+				href: document.location.href,
+				hash: Utility.getHash(this.href),
+				search: Utility.getSearch(this.href),
+				pathname: Utility.getPathname(this.href)
+			};
 
-		self.show(self._state);
+			route.handler(Request$1(data), Response$1(data));
+		} else {
+			Render.text({ query: this.query });
+		}
 
 		return self;
 	};
@@ -202,21 +327,24 @@
 	Router.prototype.listen = function () {
 		var self = this;
 
+		if (self.isListening) return self;
+		else self.isListening = true;
+
 		window.addEventListener('DOMContentLoaded', function () {
 			var state = { title: document.title, path: document.location.href };
 			self.navigate(state, REPLACE);
 		}, false);
 
-		window.addEventListener(self._html5 ? 'popstate' : 'hashchange', function (e) {
-			if (self._permitChangeEvent) {
+		window.addEventListener(self.mode ? 'popstate' : 'hashchange', function (e) {
+			if (self.permitChangeEvent) {
 				var state = {};
 
-				if (self._html5) state = e.state || {};
+				if (self.mode) state = e.state || {};
 				else state = { path: e.newURL };
 
 				self.navigate(state);
 			} else {
-				self._permitChangeEvent = true;
+				self.permitChangeEvent = true;
 			}
 		}, false);
 
@@ -237,18 +365,18 @@
 			};
 
 			// check non acceptable href
-			if (has(state.path, 'mailto:')) return;
-			if (has(state.path, 'tel:')) return;
-			if (has(state.path, 'file:')) return;
-			if (has(state.path, 'ftp:')) return;
+			if (Utility.has(state.path, 'mailto:')) return;
+			if (Utility.has(state.path, 'tel:')) return;
+			if (Utility.has(state.path, 'file:')) return;
+			if (Utility.has(state.path, 'ftp:')) return;
 
 			// check non acceptable origin
-			if (!self.isOrigin(state.path)) return;
+			if (!self.isSameOrigin(state.path)) return;
 
 			e.preventDefault();
 
 			// check for same path
-			if (self.isSame(state.path, self._state.path) === true) return;
+			if (self.isSamePath(state.path, self.state.path)) return;
 
 			self.navigate(state, PUSH);
 		}, false);
@@ -256,28 +384,17 @@
 		return self;
 	};
 
-	if (!window.Rutta) {
-		window.Rutta = {
-			routers: {},
-			router: function (name, options) {
+	var Rutta = {
+		routers: {},
+		router: function (options) {
+			// if (!options.name) options.name = Object.keys(this.routers).length.toString();
+			if (!options.name) throw new Error('Router - name parameter required');
+			if (this.routers[options.name]) throw new Error('Router - name ' + options.name + ' exists');
+			this.routers[options.name] = new Router(options);
+			return this.routers[options.name];
+		}
+	};
 
-				if (!options && typeof name === 'object') {
-					options = name;
-					name = null;
-				} else {
-					options = options || {};
-					options.name = name;
-				}
+	return Rutta;
 
-				if (!options.name) throw new Error('Router - name parameter required');
-				if (this.routers[options.name]) throw new Error('Router - ' + options.name + ' already exists');
-
-				var router = new Router(options);
-				this.routers[options.name] = router;
-				return router;
-			}
-
-		};
-	}
-
-}());
+})));

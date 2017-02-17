@@ -1,10 +1,12 @@
 {
   "name": "rutta",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Rutta a browser side router.",
-  "main": "src/rutta.b.m.js",
+  "main": "dist/rutta.js",
+  "module": "src/rutta.b.js",
   "scripts": {
-    "test": ""
+	  "dev": "muleify serve src dev -s",
+      "dist": "muleify pack src dist -m"
   },
   "repository": {
     "type": "git",
@@ -15,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/AlexanderElias/rutta/issues"
   },
-  "homepage": "https://github.com/AlexanderElias/rutta#readme"
+  "homepage": "https://github.com/AlexanderElias/rutta#readme",
+  "dependencies": {
+    "axa": "^1.0.5"
+  }
 }

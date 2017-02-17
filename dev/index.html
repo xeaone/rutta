@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<!-- <title>Rutta</title> -->
-	<script src="/rutta.js"></script>
+	<script src="rutta.js"></script>
+	<link rel="stylesheet" href="assets/index.css">
+	<script src="assets/index.js"></script>
 </head>
 <body>
 
@@ -12,45 +13,11 @@
 		<li><a href="/page/">/Page/</a></li>
 		<li><a href="/page?foo=bar">/Page?foo=bar</a></li>
 		<li><a href="/page#foo">/Page#foo</a></li>
+		<li><a href="/foo/bar">/foo/bar</a></li>
+		<li><a href="/xhr">/xhr</a></li>
 	</ul>
 
 	<div r-view="main"></div>
-
-	<script>
-		var options = {
-			name: 'main',
-			html5: false,
-			routes: [
-				{
-					path: '/',
-					title: 'Home',
-					handler: function (req, res) {
-						return res.content('<h1>home</h1>');
-					}
-				}
-			]
-		};
-
-		var route = [
-			{
-				path: '/page',
-				title: 'Page',
-				handler: function (req, res) {
-					return res.content('<h1>page</h1>');
-				}
-			},
-			{
-				path: '/extract',
-				title: 'Extract',
-				handler: function (req, res) {
-					return res.content('<h1>Extract</h1>');
-				}
-			},
-		];
-
-		Rutta.router(options).add(route).remove('/extract').listen();
-
-	</script>
 
 </body>
 </html>
