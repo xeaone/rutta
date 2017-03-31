@@ -16,7 +16,7 @@ Response.prototype.content = function (content) {
 	});
 };
 
-Response.prototype.file = function (path) {
+Response.prototype.file = function (path, callback) {
 	var self = this;
 
 	Axa.request({
@@ -28,6 +28,8 @@ Response.prototype.file = function (path) {
 				title: self.route.title,
 				content: xhr.response
 			});
+
+			if (callback) return callback();
 		},
 		error: function (xhr) {
 			Render.text({
@@ -35,6 +37,8 @@ Response.prototype.file = function (path) {
 				title: self.route.title,
 				content: xhr.response
 			});
+
+			if (callback) return callback();
 		}
 	});
 };

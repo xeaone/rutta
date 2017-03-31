@@ -1,7 +1,404 @@
-/*
-	@preserve
-	title: rutta
-	version: 1.0.3
-	author: alexander elias
-*/
-(function(a,b){'object'==typeof exports&&'undefined'!=typeof module?module.exports=b():'function'==typeof define&&define.amd?define('Rutta',b):a.Rutta=b()})(this,function(){'use strict';function b(z){return decodeURI(z).replace(document.location.origin,'').replace(/(^\/?#?\/)/,'').replace(/(\/$)/,'')}function h(z){this.route=z.route,this.state=z.state}function j(z){return new h(z)}function k(z){var A='';for(var B in z)A=0<A.length?A+'&':A,A=A+encodeURIComponent(B)+'='+encodeURIComponent(z[B]);return A}function n(z){this.query=z.query,this.route=z.route}function o(z){return new n(z)}function p(z){this.name=z.name,this.routes=z.routes||[],this.redirects=z.redirects||[],this.query=z.query||'[r-view="'+this.name+'"]',this.isListening=!1,this.permitChangeEvent=!0,this.state=z.state||{},this.location=document.location,this.mode=null===z.mode||z.mode===void 0?x:z.mode,this.root=null===z.root||z.root===void 0?this.mode?'/':'#/':z.root}var q={has:function(z,A){return-1!==z.indexOf(A)},clean:b,strip:function(z){return b(z).replace(/(\?.*?$)|(#.*?$)/g,'')},getSearch:function(z){return b(z).split('?')[1]||''},getHash:function(z){return b(z).split('?')[0].split('#')[1]||''},getPathname:function(z){return b(z).split('?')[0].split('#')[0]||''}},r={html:function(z){z=z||{},document.title=z.title||'',document.querySelector(z.query).innerHTML=z.content||''},text:function(z){z=z||{},document.title=z.title||'',document.querySelector(z.query).innerText=z.content||''}},t={script:'text/javascript, application/javascript, application/x-javascript',json:'application/json, text/javascript',xml:'application/xml, text/xml',html:'text/html',text:'text/plain',urlencoded:'application/x-www-form-urlencoded'},u={mime:t,request:function(z){if(!z)throw new Error('Axa: requires options');if(!z.action)throw new Error('Axa: requires options.action');if(z.method||(z.method='GET'),z.headers||(z.headers={}),z.data)if('GET'===z.method)z.action=z.action+'?'+k(z.data),z.data=null;else{switch(z.requestType=z.requestType.toLowerCase(),z.responseType=z.responseType.toLowerCase(),z.requestType){case'script':z.contentType=t.script;break;case'json':z.contentType=t.json;break;case'xml':z.contentType=t.xm;break;case'html':z.contentType=t.html;break;case'text':z.contentType=t.text;break;default:z.contentType=t.urlencoded;}switch(z.responseType){case'script':z.accept=t.script;break;case'json':z.accept=t.json;break;case'xml':z.accept=t.xml;break;case'html':z.accept=t.html;break;case'text':z.accept=t.text;}z.contentType===t.json&&(z.data=JSON.stringify(z.data)),z.contentType===t.urlencoded&&(z.data=k(z.data))}var A=new XMLHttpRequest;if(A.open(z.method.toUpperCase(),z.action,!0,z.username,z.password),z.mimeType&&A.overrideMimeType(z.mimeType),z.withCredentials&&(A.withCredentials=z.withCredentials),z.accept&&(z.headers.Accept=z.accept),z.contentType&&(z.headers['Content-Type']=z.contentType),z.headers)for(var B in z.headers)A.setRequestHeader(B,z.headers[B]);A.onreadystatechange=function(){if(4===A.readyState)return 200<=A.status&&400>A.status?z.success(A):z.error(A)},A.send(z.data)},serialize:k};n.prototype.content=function(z){var A=this;r.html({query:A.query,title:A.route.title,content:z})},n.prototype.file=function(z){var A=this;u.request({action:z,responseType:'html',success:function(B){r.html({query:A.query,title:A.route.title,content:B.response})},error:function(B){r.text({query:A.query,title:A.route.title,content:B.response})}})},n.prototype.redirect=function(z){window.location=z};var v=2,w=3,x='history'in window&&'pushState'in window.history;p.prototype.isSameOrigin=function(z){return z&&-1<z.indexOf(document.location.origin)},p.prototype.isSamePath=function(z,A){return q.clean(z||'')===q.clean(A||'')},p.prototype.add=function(z){var A=this;return'Object'===z.constructor.name?A.routes.push(z):'Array'===z.constructor.name&&(A.routes=A.routes.concat(z)),A},p.prototype.remove=function(z){for(var D,A=this,B=0,C=A.routes.length;B<C;B++)if(D=A.routes[B],z===D.path){A.routes.splice(B,1);break}return A},p.prototype.get=function(z){var A=this,B=A.routes.length,C=null,D=0;for(z=q.strip(z),D;D<B;D++)if(C=A.routes[D],'string'==typeof C.path){if(C.path===z||C.path==='/'+z)return C;}else if(C.path.test(z))return C},p.prototype.navigate=function(z,A){var B=this,C=B.get(z.path);if(B.state.title=C&&C.title?C.title:z.title,B.state.path=B.mode?B.root+q.clean(z.path):B.root+q.clean(z.path),B.mode?(A===v&&window.history.pushState(B.state,B.state.title,B.state.path),A===w&&window.history.replaceState(B.state,B.state.title,B.state.path)):(B.permitChangeEvent=!1,window.location.hash=B.state.path),C){var D={route:C,state:this.state,query:this.query,href:document.location.href,hash:q.getHash(this.href),search:q.getSearch(this.href),pathname:q.getPathname(this.href)};C.handler(j(D),o(D))}else r.text({query:this.query});return B},p.prototype.listen=function(){var z=this;return z.isListening?z:(z.isListening=!0,window.addEventListener('DOMContentLoaded',function(){var A={title:document.title,path:document.location.href};z.navigate(A,w)},!1),window.addEventListener(z.mode?'popstate':'hashchange',function(A){if(z.permitChangeEvent){var B={};B=z.mode?A.state||{}:{path:A.newURL},z.navigate(B)}else z.permitChangeEvent=!0},!1),window.addEventListener('click',function(A){if(!(A.metaKey||A.ctrlKey||A.shiftKey)){for(var B=A.path?A.path[0]:A.target;B&&'A'!==B.nodeName;)B=B.parentNode;if(B&&'A'===B.nodeName&&!(B.hasAttribute('download')||'external'===B.getAttribute('rel'))){var C={path:B.href||'',title:B.title||''};q.has(C.path,'mailto:')||q.has(C.path,'tel:')||q.has(C.path,'file:')||q.has(C.path,'ftp:')||z.isSameOrigin(C.path)&&(A.preventDefault(),z.isSamePath(C.path,z.state.path)||z.navigate(C,v))}}},!1),z)};return{routers:{},router:function(z){if(!z.name)throw new Error('Router - name parameter required');if(this.routers[z.name])throw new Error('Router - name '+z.name+' exists');return this.routers[z.name]=new p(z),this.routers[z.name]}}});
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+	typeof define === 'function' && define.amd ? define('Rutta', factory) :
+	(global.Rutta = factory());
+}(this, (function () { 'use strict';
+
+	function has (string, search) {
+		return string.indexOf(search) !== -1;
+	}
+
+	function clean (s) {
+		return decodeURI(s)
+		.replace(document.location.origin, '')
+		.replace(/(^\/?#?\/)/, '')
+		.replace(/(\/$)/, '');
+	}
+
+	function strip (s) {
+		return clean(s).replace(/(\?.*?$)|(#.*?$)/g, '');
+	}
+
+	function getSearch (s) {
+		return clean(s).split('?')[1] || '';
+	}
+
+	function getHash (s) {
+		return clean(s).split('?')[0].split('#')[1] || '';
+	}
+
+	function getPathname (s) {
+		return clean(s).split('?')[0].split('#')[0] || '';
+	}
+
+	var Utility = {
+		has: has,
+		clean: clean,
+		strip: strip,
+		getSearch: getSearch,
+		getHash: getHash,
+		getPathname: getPathname
+	};
+
+	var Render = {
+		html: function (data) {
+			data = data || {};
+			document.title = data.title || '';
+			document.querySelector(data.query).innerHTML = data.content || '';
+		},
+		text: function (data) {
+			data = data || {};
+			document.title = data.title || '';
+			document.querySelector(data.query).innerText = data.content || '';
+		}
+	};
+
+	function Request (data) {
+		this.route = data.route;
+		this.state = data.state;
+	}
+
+	var Request$1 = function (data) {
+		return new Request(data);
+	};
+
+	/*
+		@preserve
+		title: axa
+		version: 1.0.5
+		author: Alexander Elias
+		descript: Axa a low level Ajax Xhr library.
+	*/
+
+	var mime = {
+		script: 'text/javascript, application/javascript, application/x-javascript',
+		json: 'application/json, text/javascript',
+		xml: 'application/xml, text/xml',
+		html: 'text/html',
+		text: 'text/plain',
+		urlencoded: 'application/x-www-form-urlencoded'
+	};
+
+	function serialize (data) {
+		var string = '';
+
+		for (var name in data) {
+			string = string.length > 0 ? string + '&' : string;
+			string = string + encodeURIComponent(name) + '=' + encodeURIComponent(data[name]);
+		}
+
+		return string;
+	}
+
+	function request (options) {
+		if (!options) throw new Error('Axa: requires options');
+		if (!options.action) throw new Error('Axa: requires options.action');
+		if (!options.method) options.method = 'GET';
+		if (!options.headers) options.headers = {};
+
+		if (options.data) {
+			if (options.method === 'GET') {
+				options.action = options.action + '?' + serialize(options.data);
+				options.data = null;
+			} else {
+				options.requestType = options.requestType.toLowerCase();
+				options.responseType = options.responseType.toLowerCase();
+
+				switch (options.requestType) {
+					case 'script': options.contentType = mime.script; break;
+					case 'json': options.contentType = mime.json; break;
+					case 'xml': options.contentType = mime.xm; break;
+					case 'html': options.contentType = mime.html; break;
+					case 'text': options.contentType = mime.text; break;
+					default: options.contentType = mime.urlencoded;
+				}
+
+				switch (options.responseType) {
+					case 'script': options.accept = mime.script; break;
+					case 'json': options.accept = mime.json; break;
+					case 'xml': options.accept = mime.xml; break;
+					case 'html': options.accept = mime.html; break;
+					case 'text': options.accept = mime.text; break;
+				}
+
+				if (options.contentType === mime.json) options.data = JSON.stringify(options.data);
+				if (options.contentType === mime.urlencoded) options.data = serialize(options.data);
+			}
+		}
+
+		var xhr = new XMLHttpRequest();
+		xhr.open(options.method.toUpperCase(), options.action, true, options.username, options.password);
+
+		if (options.mimeType) xhr.overrideMimeType(options.mimeType);
+		if (options.withCredentials) xhr.withCredentials = options.withCredentials;
+
+		if (options.accept) options.headers['Accept'] = options.accept;
+		if (options.contentType) options.headers['Content-Type'] = options.contentType;
+
+		if (options.headers) {
+			for (var name in options.headers) {
+				xhr.setRequestHeader(name, options.headers[name]);
+			}
+		}
+
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4) {
+				if (xhr.status >= 200 && xhr.status < 400) {
+					return options.success(xhr);
+				} else {
+					return options.error(xhr);
+				}
+			}
+		};
+
+		xhr.send(options.data);
+	}
+
+	var Axa = {
+		mime: mime,
+		request: request,
+		serialize: serialize
+	};
+
+	function Response (data) {
+		this.query = data.query;
+		this.route = data.route;
+	}
+
+	Response.prototype.content = function (content) {
+		var self = this;
+
+		Render.html({
+			query: self.query,
+			title: self.route.title,
+			content: content
+		});
+	};
+
+	Response.prototype.file = function (path, callback) {
+		var self = this;
+
+		Axa.request({
+			action: path,
+			responseType: 'html',
+			success: function (xhr) {
+				Render.html({
+					query: self.query,
+					title: self.route.title,
+					content: xhr.response
+				});
+
+				if (callback) return callback();
+			},
+			error: function (xhr) {
+				Render.text({
+					query: self.query,
+					title: self.route.title,
+					content: xhr.response
+				});
+
+				if (callback) return callback();
+			}
+		});
+	};
+
+	Response.prototype.redirect = function (path) {
+		window.location = path;
+	};
+
+	var Response$1 = function (data) {
+		return new Response(data);
+	};
+
+	/*
+		@preserve
+		title: rutta
+		version: 1.0.4
+		author: alexander elias
+	*/
+
+	var PUSH = 2;
+	var REPLACE = 3;
+	var MODE = 'history' in window && 'pushState' in window.history;
+
+	function Router (options) {
+		this.name = options.name;
+
+		this.routes = options.routes || [];
+		this.redirects = options.redirects || [];
+		this.query = options.query || '[r-view="'+ this.name +'"]';
+
+		this.isListening = false;
+		this.permitChangeEvent = true;
+		this.state = options.state || {};
+		this.location = document.location;
+
+		this.mode = options.mode === null || options.mode === undefined ? MODE : options.mode;
+		this.root = options.root === null || options.root === undefined ? (this.mode ? '/' : '#/') : options.root;
+	}
+
+	Router.prototype.isSameOrigin = function (path) {
+		return path && path.indexOf(document.location.origin) > -1;
+	};
+
+	Router.prototype.isSamePath = function (pathOne, pathTwo) {
+		return Utility.clean(pathOne || '') === Utility.clean(pathTwo || '');
+	};
+
+	Router.prototype.add = function (route) {
+		var self = this;
+
+		if (route.constructor.name === 'Object') {
+			self.routes.push(route);
+		} else if (route.constructor.name === 'Array') {
+			self.routes = self.routes.concat(route);
+		}
+
+		return self;
+	};
+
+	Router.prototype.remove = function (path) {
+		var self = this;
+
+		for (var i = 0, l = self.routes.length; i < l; i++) {
+			var route = self.routes[i];
+
+			if (path === route.path) {
+				self.routes.splice(i, 1);
+				break;
+			}
+		}
+
+		return self;
+	};
+
+	Router.prototype.get = function (path) {
+		var self = this;
+
+		var length = self.routes.length;
+		var route = null;
+		var index = 0;
+
+		path = Utility.strip(path);
+
+		for (index; index < length; index++) {
+			route = self.routes[index];
+			if (typeof route.path === 'string') {
+				if (route.path === path || route.path === '/' + path) {
+					return route;
+				}
+			} else if (route.path.test(path)) {
+				return route;
+			}
+		}
+	};
+
+	Router.prototype.navigate = function (state, type) {
+		var self = this;
+
+		var route = self.get(state.path);
+
+		self.state.title = route && route.title ? route.title : state.title;
+		self.state.path = self.mode ? self.root + Utility.clean(state.path) : self.root + Utility.clean(state.path);
+
+		if (self.mode) {
+			if (type === PUSH) window.history.pushState(self.state, self.state.title, self.state.path);
+			if (type === REPLACE) window.history.replaceState(self.state, self.state.title, self.state.path);
+		} else {
+			self.permitChangeEvent = false;
+			window.location.hash = self.state.path;
+		}
+
+		if (route) {
+			var data = {
+				route: route,
+				state: this.state,
+				query: this.query,
+				href: document.location.href,
+				hash: Utility.getHash(this.href),
+				search: Utility.getSearch(this.href),
+				pathname: Utility.getPathname(this.href)
+			};
+
+			route.handler(Request$1(data), Response$1(data));
+		} else {
+			Render.text({ query: this.query });
+		}
+
+		return self;
+	};
+
+	Router.prototype.listen = function () {
+		var self = this;
+
+		if (self.isListening) return self;
+		else self.isListening = true;
+
+		window.addEventListener('DOMContentLoaded', function () {
+			var state = { title: document.title, path: document.location.href };
+			self.navigate(state, REPLACE);
+		}, false);
+
+		window.addEventListener(self.mode ? 'popstate' : 'hashchange', function (e) {
+			if (self.permitChangeEvent) {
+				var state = {};
+
+				if (self.mode) state = e.state || {};
+				else state = { path: e.newURL };
+
+				self.navigate(state);
+			} else {
+				self.permitChangeEvent = true;
+			}
+		}, false);
+
+		window.addEventListener('click', function (e) {
+			if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+
+			// ensure target is anchor tag use shadow dom if available
+			var target = e.path ? e.path[0] : e.target;
+			while (target && 'A' !== target.nodeName) target = target.parentNode;
+			if (!target || 'A' !== target.nodeName) return;
+
+			// check non acceptable attributes
+			if (target.hasAttribute('download') || target.getAttribute('rel') === 'external') return;
+
+			var state = {
+				path: target.href || '',
+				title: target.title || ''
+			};
+
+			// check non acceptable href
+			if (Utility.has(state.path, 'mailto:')) return;
+			if (Utility.has(state.path, 'tel:')) return;
+			if (Utility.has(state.path, 'file:')) return;
+			if (Utility.has(state.path, 'ftp:')) return;
+
+			// check non acceptable origin
+			if (!self.isSameOrigin(state.path)) return;
+
+			e.preventDefault();
+
+			// check for same path
+			if (self.isSamePath(state.path, self.state.path)) return;
+
+			self.navigate(state, PUSH);
+		}, false);
+
+		return self;
+	};
+
+	var Rutta = {
+		routers: {},
+		router: function (options) {
+			// if (!options.name) options.name = Object.keys(this.routers).length.toString();
+			if (!options.name) throw new Error('Router - name parameter required');
+			if (this.routers[options.name]) throw new Error('Router - name ' + options.name + ' exists');
+			this.routers[options.name] = new Router(options);
+			return this.routers[options.name];
+		}
+	};
+
+	return Rutta;
+
+})));

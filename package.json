@@ -1,12 +1,11 @@
 {
   "name": "rutta",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Rutta a browser side router.",
   "main": "dist/rutta.js",
   "module": "src/rutta.b.js",
   "scripts": {
-	  "dev": "muleify serve src dev -s",
-      "dist": "muleify pack src dist -m"
+      "build": "muleify pack src dist && muleify pack src/rutta.b.js dist/rutta.min.js -m"
   },
   "repository": {
     "type": "git",
