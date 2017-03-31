@@ -213,7 +213,7 @@
 	/*
 		@preserve
 		title: rutta
-		version: 1.0.4
+		version: 1.1.4
 		author: alexander elias
 	*/
 
@@ -227,6 +227,7 @@
 		this.routes = options.routes || [];
 		this.redirects = options.redirects || [];
 		this.query = options.query || '[r-view="'+ this.name +'"]';
+		this.authorize = options.authorize || function () { return true; };
 
 		this.isListening = false;
 		this.permitChangeEvent = true;
@@ -295,8 +296,20 @@
 
 	Router.prototype.navigate = function (state, type) {
 		var self = this;
-
 		var route = self.get(state.path);
+		var data = {
+			route: route,
+			state: this.state,
+			query: this.query,
+			href: document.location.href,
+			hash: Utility.getHash(this.href),
+			search: Utility.getSearch(this.href),
+			pathname: Utility.getPathname(this.href)
+		};
+
+		if (self.authorize && !self.authorize(Request$1(data), Response$1(data))) {
+			return Render.text('{"statusCode":401,"error":"Missing Authentication"}');
+		}
 
 		self.state.title = route && route.title ? route.title : state.title;
 		self.state.path = self.mode ? self.root + Utility.clean(state.path) : self.root + Utility.clean(state.path);
@@ -310,19 +323,9 @@
 		}
 
 		if (route) {
-			var data = {
-				route: route,
-				state: this.state,
-				query: this.query,
-				href: document.location.href,
-				hash: Utility.getHash(this.href),
-				search: Utility.getSearch(this.href),
-				pathname: Utility.getPathname(this.href)
-			};
-
 			route.handler(Request$1(data), Response$1(data));
 		} else {
-			Render.text({ query: this.query });
+			Render.text('{"statusCode":404,"error":"Not Found"}');
 		}
 
 		return self;

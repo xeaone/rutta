@@ -1,6 +1,6 @@
 {
   "name": "rutta",
-  "version": "1.0.4",
+  "version": "1.1.4",
   "description": "Rutta a browser side router.",
   "main": "dist/rutta.js",
   "module": "src/rutta.b.js",
