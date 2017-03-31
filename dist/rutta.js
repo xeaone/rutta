@@ -41,15 +41,11 @@
 	};
 
 	var Render = {
-		html: function (data) {
-			data = data || {};
-			document.title = data.title || '';
-			document.querySelector(data.query).innerHTML = data.content || '';
-		},
-		text: function (data) {
-			data = data || {};
-			document.title = data.title || '';
-			document.querySelector(data.query).innerText = data.content || '';
+		content: function (data) {
+			if (data.title) document.title = data.title || '';
+			if (data.text) document.querySelector(data.query).innerText = data.text;
+			else if (data.html) document.querySelector(data.query).innerHTML = data.html;
+			else document.querySelector(data.query).innerText = '';
 		}
 	};
 
@@ -165,13 +161,13 @@
 		this.route = data.route;
 	}
 
-	Response.prototype.content = function (content) {
+	Response.prototype.content = function (html) {
 		var self = this;
 
-		Render.html({
+		Render.content({
 			query: self.query,
 			title: self.route.title,
-			content: content
+			html: html
 		});
 	};
 
@@ -182,19 +178,19 @@
 			action: path,
 			responseType: 'html',
 			success: function (xhr) {
-				Render.html({
+				Render.content({
 					query: self.query,
 					title: self.route.title,
-					content: xhr.response
+					html: xhr.response
 				});
 
 				if (callback) return callback();
 			},
 			error: function (xhr) {
-				Render.text({
+				Render.content({
 					query: self.query,
 					title: self.route.title,
-					content: xhr.response
+					text: xhr.response
 				});
 
 				if (callback) return callback();
@@ -213,7 +209,7 @@
 	/*
 		@preserve
 		title: rutta
-		version: 1.1.4
+		version: 1.1.7
 		author: alexander elias
 	*/
 
@@ -297,6 +293,10 @@
 	Router.prototype.navigate = function (state, type) {
 		var self = this;
 		var route = self.get(state.path);
+
+		self.state.title = route && route.title ? route.title : state.title;
+		self.state.path = self.mode ? self.root + Utility.clean(state.path) : self.root + Utility.clean(state.path);
+
 		var data = {
 			route: route,
 			state: this.state,
@@ -307,12 +307,14 @@
 			pathname: Utility.getPathname(this.href)
 		};
 
-		if (self.authorize && !self.authorize(Request$1(data), Response$1(data))) {
-			return Render.text('{"statusCode":401,"error":"Missing Authentication"}');
-		}
+		if (self.authorize(Request$1(data), Response$1(data)) === false) {
+			Render.content({
+				title: '401',
+				text: '{"statusCode":401,"error":"Missing Authentication"}'
+			});
 
-		self.state.title = route && route.title ? route.title : state.title;
-		self.state.path = self.mode ? self.root + Utility.clean(state.path) : self.root + Utility.clean(state.path);
+			return self;
+		}
 
 		if (self.mode) {
 			if (type === PUSH) window.history.pushState(self.state, self.state.title, self.state.path);
@@ -325,7 +327,10 @@
 		if (route) {
 			route.handler(Request$1(data), Response$1(data));
 		} else {
-			Render.text('{"statusCode":404,"error":"Not Found"}');
+			Render.content({
+				title: '404',
+				text: '{"statusCode":404,"error":"Not Found"}'
+			});
 		}
 
 		return self;

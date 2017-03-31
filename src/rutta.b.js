@@ -1,7 +1,7 @@
 /*
 	@preserve
 	title: rutta
-	version: 1.1.4
+	version: 1.1.7
 	author: alexander elias
 */
 
@@ -90,6 +90,10 @@ Router.prototype.get = function (path) {
 Router.prototype.navigate = function (state, type) {
 	var self = this;
 	var route = self.get(state.path);
+
+	self.state.title = route && route.title ? route.title : state.title;
+	self.state.path = self.mode ? self.root + Utility.clean(state.path) : self.root + Utility.clean(state.path);
+
 	var data = {
 		route: route,
 		state: this.state,
@@ -100,12 +104,14 @@ Router.prototype.navigate = function (state, type) {
 		pathname: Utility.getPathname(this.href)
 	};
 
-	if (self.authorize && !self.authorize(Request(data), Response(data))) {
-		return Render.text('{"statusCode":401,"error":"Missing Authentication"}');
-	}
+	if (self.authorize(Request(data), Response(data)) === false) {
+		Render.content({
+			title: '401',
+			text: '{"statusCode":401,"error":"Missing Authentication"}'
+		});
 
-	self.state.title = route && route.title ? route.title : state.title;
-	self.state.path = self.mode ? self.root + Utility.clean(state.path) : self.root + Utility.clean(state.path);
+		return self;
+	}
 
 	if (self.mode) {
 		if (type === PUSH) window.history.pushState(self.state, self.state.title, self.state.path);
@@ -118,7 +124,10 @@ Router.prototype.navigate = function (state, type) {
 	if (route) {
 		route.handler(Request(data), Response(data));
 	} else {
-		Render.text('{"statusCode":404,"error":"Not Found"}');
+		Render.content({
+			title: '404',
+			text: '{"statusCode":404,"error":"Not Found"}'
+		});
 	}
 
 	return self;

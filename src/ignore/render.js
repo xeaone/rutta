@@ -1,14 +1,10 @@
 
 var Render = {
-	html: function (data) {
-		data = data || {};
-		document.title = data.title || '';
-		document.querySelector(data.query).innerHTML = data.content || '';
-	},
-	text: function (data) {
-		data = data || {};
-		document.title = data.title || '';
-		document.querySelector(data.query).innerText = data.content || '';
+	content: function (data) {
+		if (data.title) document.title = data.title || '';
+		if (data.text) document.querySelector(data.query).innerText = data.text;
+		else if (data.html) document.querySelector(data.query).innerHTML = data.html;
+		else document.querySelector(data.query).innerText = '';
 	}
 };
 
