@@ -1,7 +1,7 @@
 /*
 	@preserve
 	title: rutta
-	version: 1.1.9
+	version: 1.2.0
 	author: alexander elias
 */
 
