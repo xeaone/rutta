@@ -50,11 +50,14 @@
 			else document.querySelector(data.query).innerText = '505 Router Error';
 
 			// execute scripts
-			var scripts = inner.match(/<script>(.*?)<\/script>/g);
-			scripts.forEach(function (script) {
-				script = script.replace(/(<script>)|(<\/script>)/g, '');
-				new Function (script);
-			});
+			var scripts = inner.match(/<script>[\s\S]+<\/script>/g);
+
+			if (scripts) {
+				scripts.forEach(function (script) {
+					script = script.replace(/(<script>)|(<\/script>)/g, '');
+					eval(script);
+				});
+			}
 
 		}
 	};
@@ -219,7 +222,7 @@
 	/*
 		@preserve
 		title: rutta
-		version: 1.1.9
+		version: 1.2.1
 		author: alexander elias
 	*/
 
