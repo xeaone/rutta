@@ -225,7 +225,7 @@
 	/*
 		@preserve
 		title: rutta
-		version: 1.2.7
+		version: 1.2.8
 		author: alexander elias
 	*/
 
@@ -421,6 +421,9 @@
 	var Rutta = {
 		routers: {},
 		fetch: Axa.request,
+		redirect: function (path) {
+			window.location = path;
+		},
 		router: function (options) {
 			// if (!options.name) options.name = Object.keys(this.routers).length.toString();
 			if (!options.name) throw new Error('Router - name parameter required');
