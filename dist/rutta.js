@@ -49,6 +49,8 @@
 			else if (data.html !== null && data.html !== undefined) document.querySelector(data.query).innerHTML = data.html;
 			else document.querySelector(data.query).innerText = '505 Router Error';
 
+			window.scroll(0, 0);
+
 			// execute scripts
 			var scripts = inner.match(/<script>[\s\S]+<\/script>/g);
 
@@ -222,7 +224,7 @@
 	/*
 		@preserve
 		title: rutta
-		version: 1.2.4
+		version: 1.2.5
 		author: alexander elias
 	*/
 
