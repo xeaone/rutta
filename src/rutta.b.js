@@ -1,7 +1,7 @@
 /*
 	@preserve
 	title: rutta
-	version: 1.2.3
+	version: 1.2.4
 	author: alexander elias
 */
 
@@ -174,7 +174,7 @@ Router.prototype.listen = function () {
 			title: target.title || ''
 		};
 
-		if (self.base && state.path.indexOf(self.base) !== 0) return;
+		if (self.base && Utility.getPathname(state.path).indexOf(self.base) !== 0) return;
 
 		// check non acceptable href
 		if (Utility.has(state.path, 'mailto:')) return;
