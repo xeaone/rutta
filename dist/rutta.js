@@ -40,29 +40,25 @@
 		getPathname: getPathname
 	};
 
-	var Render = {
-		content: function (data) {
-			var inner = data.text || data.html;
+	function Render (data) {
+		if (data.title !== null && data.title !== undefined) document.title = data.title;
+		if (data.type === 'text') document.querySelector(data.query).innerText = data.content;
+		else if (data.type === 'html') document.querySelector(data.query).innerHTML = data.content;
+		else document.querySelector(data.query).innerText = '505 Router Error';
 
-			if (data.title !== null && data.title !== undefined) document.title = data.title;
-			if (data.text !== null && data.text !== undefined) document.querySelector(data.query).innerText = data.text;
-			else if (data.html !== null && data.html !== undefined) document.querySelector(data.query).innerHTML = data.html;
-			else document.querySelector(data.query).innerText = '505 Router Error';
+		window.scroll(0, 0);
 
-			window.scroll(0, 0);
+		// execute scripts
+		var scripts = data.content.match(/<script>[\s\S]+<\/script>/g);
 
-			// execute scripts
-			var scripts = inner.match(/<script>[\s\S]+<\/script>/g);
-
-			if (scripts) {
-				scripts.forEach(function (script) {
-					script = script.replace(/(<script>)|(<\/script>)/g, '');
-					eval(script);
-				});
-			}
-
+		if (scripts) {
+			scripts.forEach(function (script) {
+				script = script.replace(/(<script>)|(<\/script>)/g, '');
+				eval(script);
+			});
 		}
-	};
+
+	}
 
 	function Request (data) {
 		this.route = data.route;
@@ -176,14 +172,17 @@
 		this.route = data.route;
 	}
 
-	Response.prototype.content = function (html) {
+	Response.prototype.send = function (content, callback) {
 		var self = this;
 
-		Render.content({
+		Render({
+			type: 'html',
 			query: self.query,
 			title: self.route.title,
-			html: html
+			content: content
 		});
+
+		if (callback) return callback();
 	};
 
 	Response.prototype.file = function (path, callback) {
@@ -193,19 +192,21 @@
 			action: path,
 			responseType: 'html',
 			success: function (xhr) {
-				Render.content({
+				Render({
+					type: 'html',
 					query: self.query,
 					title: self.route.title,
-					html: xhr.response
+					content: xhr.response
 				});
 
 				if (callback) return callback();
 			},
 			error: function (xhr) {
-				Render.content({
+				Render({
+					type: 'text',
 					query: self.query,
 					title: self.route.title,
-					text: xhr.response
+					content: xhr.response
 				});
 
 				if (callback) return callback();
@@ -224,7 +225,7 @@
 	/*
 		@preserve
 		title: rutta
-		version: 1.2.6
+		version: 1.2.7
 		author: alexander elias
 	*/
 
@@ -324,7 +325,8 @@
 		};
 
 		if (self.authorize(Request$1(data), Response$1(data)) === false) {
-			Render.content({
+			Render({
+				type: 'text',
 				title: '401',
 				text: '{"statusCode":401,"error":"Missing Authentication"}'
 			});
@@ -343,7 +345,8 @@
 		if (route) {
 			route.handler(Request$1(data), Response$1(data));
 		} else {
-			Render.content({
+			Render({
+				type: 'text',
 				title: '404',
 				text: '{"statusCode":404,"error":"Not Found"}'
 			});
@@ -392,6 +395,7 @@
 				title: target.title || ''
 			};
 
+			// if base and base not equal the url then ignore
 			if (self.base && Utility.getPathname(state.path).indexOf(self.base) !== 0) return;
 
 			// check non acceptable href

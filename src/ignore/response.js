@@ -6,14 +6,17 @@ function Response (data) {
 	this.route = data.route;
 }
 
-Response.prototype.content = function (html) {
+Response.prototype.send = function (content, callback) {
 	var self = this;
 
-	Render.content({
+	Render({
+		type: 'html',
 		query: self.query,
 		title: self.route.title,
-		html: html
+		content: content
 	});
+
+	if (callback) return callback();
 };
 
 Response.prototype.file = function (path, callback) {
@@ -23,19 +26,21 @@ Response.prototype.file = function (path, callback) {
 		action: path,
 		responseType: 'html',
 		success: function (xhr) {
-			Render.content({
+			Render({
+				type: 'html',
 				query: self.query,
 				title: self.route.title,
-				html: xhr.response
+				content: xhr.response
 			});
 
 			if (callback) return callback();
 		},
 		error: function (xhr) {
-			Render.content({
+			Render({
+				type: 'text',
 				query: self.query,
 				title: self.route.title,
-				text: xhr.response
+				content: xhr.response
 			});
 
 			if (callback) return callback();

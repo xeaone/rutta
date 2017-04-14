@@ -1,7 +1,7 @@
 /*
 	@preserve
 	title: rutta
-	version: 1.2.6
+	version: 1.2.7
 	author: alexander elias
 */
 
@@ -107,7 +107,8 @@ Router.prototype.navigate = function (state, type) {
 	};
 
 	if (self.authorize(Request(data), Response(data)) === false) {
-		Render.content({
+		Render({
+			type: 'text',
 			title: '401',
 			text: '{"statusCode":401,"error":"Missing Authentication"}'
 		});
@@ -126,7 +127,8 @@ Router.prototype.navigate = function (state, type) {
 	if (route) {
 		route.handler(Request(data), Response(data));
 	} else {
-		Render.content({
+		Render({
+			type: 'text',
 			title: '404',
 			text: '{"statusCode":404,"error":"Not Found"}'
 		});
@@ -175,6 +177,7 @@ Router.prototype.listen = function () {
 			title: target.title || ''
 		};
 
+		// if base and base not equal the url then ignore
 		if (self.base && Utility.getPathname(state.path).indexOf(self.base) !== 0) return;
 
 		// check non acceptable href
