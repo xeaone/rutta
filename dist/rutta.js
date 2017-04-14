@@ -222,7 +222,7 @@
 	/*
 		@preserve
 		title: rutta
-		version: 1.2.1
+		version: 1.2.2
 		author: alexander elias
 	*/
 
@@ -233,6 +233,7 @@
 	function Router (options) {
 		this.name = options.name;
 
+		this.root = options.root || '/';
 		this.routes = options.routes || [];
 		this.redirects = options.redirects || [];
 		this.query = options.query || '[r-view="'+ this.name +'"]';
@@ -382,13 +383,15 @@
 			if (!target || 'A' !== target.nodeName) return;
 
 			// check non acceptable attributes
-			if (target.hasAttribute('download') || target.getAttribute('rel') === 'external') return;
+			if (target.hasAttribute('r-ignore') || target.hasAttribute('download') || target.getAttribute('rel') === 'external') return;
 
 			var state = {
 				path: target.href || '',
 				title: target.title || ''
 			};
 
+			if (state.path.indexOf(self.root) !== 0) return;
+			
 			// check non acceptable href
 			if (Utility.has(state.path, 'mailto:')) return;
 			if (Utility.has(state.path, 'tel:')) return;
