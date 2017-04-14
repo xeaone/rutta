@@ -72,7 +72,7 @@
 	/*
 		@preserve
 		title: axa
-		version: 1.0.5
+		version: 1.0.6
 		author: Alexander Elias
 		descript: Axa a low level Ajax Xhr library.
 	*/
@@ -108,8 +108,8 @@
 				options.action = options.action + '?' + serialize(options.data);
 				options.data = null;
 			} else {
-				options.requestType = options.requestType.toLowerCase();
-				options.responseType = options.responseType.toLowerCase();
+				options.requestType = options.requestType ? options.requestType.toLowerCase() : '';
+				options.responseType = options.responseType ? options.responseType.toLowerCase() : '';
 
 				switch (options.requestType) {
 					case 'script': options.contentType = mime.script; break;
@@ -225,7 +225,7 @@
 	/*
 		@preserve
 		title: rutta
-		version: 1.2.8
+		version: 1.2.9
 		author: alexander elias
 	*/
 
@@ -425,7 +425,6 @@
 			window.location = path;
 		},
 		router: function (options) {
-			// if (!options.name) options.name = Object.keys(this.routers).length.toString();
 			if (!options.name) throw new Error('Router - name parameter required');
 			if (this.routers[options.name]) throw new Error('Router - name ' + options.name + ' exists');
 			this.routers[options.name] = new Router(options);

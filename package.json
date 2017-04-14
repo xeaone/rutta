@@ -1,11 +1,11 @@
 {
   "name": "rutta",
-  "version": "1.2.8",
+  "version": "1.2.9",
   "description": "Rutta a browser side router.",
   "main": "dist/rutta.js",
   "module": "src/rutta.b.js",
   "scripts": {
-      "build": "muleify pack src dist && muleify pack src/rutta.b.js dist/rutta.min.js -m"
+    "build": "muleify pack src dist && muleify pack src/rutta.b.js dist/rutta.min.js -m"
   },
   "repository": {
     "type": "git",
@@ -18,6 +18,6 @@
   },
   "homepage": "https://github.com/AlexanderElias/rutta#readme",
   "dependencies": {
-    "axa": "^1.0.5"
+    "axa": "^1.0.6"
   }
 }

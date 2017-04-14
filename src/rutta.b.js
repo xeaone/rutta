@@ -1,7 +1,7 @@
 /*
 	@preserve
 	title: rutta
-	version: 1.2.8
+	version: 1.2.9
 	author: alexander elias
 */
 
@@ -207,7 +207,6 @@ var Rutta = {
 		window.location = path;
 	},
 	router: function (options) {
-		// if (!options.name) options.name = Object.keys(this.routers).length.toString();
 		if (!options.name) throw new Error('Router - name parameter required');
 		if (this.routers[options.name]) throw new Error('Router - name ' + options.name + ' exists');
 		this.routers[options.name] = new Router(options);
