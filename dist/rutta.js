@@ -222,7 +222,7 @@
 	/*
 		@preserve
 		title: rutta
-		version: 1.2.2
+		version: 1.2.3
 		author: alexander elias
 	*/
 
@@ -233,7 +233,7 @@
 	function Router (options) {
 		this.name = options.name;
 
-		this.root = options.root || '/';
+		this.base = options.base;
 		this.routes = options.routes || [];
 		this.redirects = options.redirects || [];
 		this.query = options.query || '[r-view="'+ this.name +'"]';
@@ -390,8 +390,8 @@
 				title: target.title || ''
 			};
 
-			if (state.path.indexOf(self.root) !== 0) return;
-			
+			if (self.base && state.path.indexOf(self.base) !== 0) return;
+
 			// check non acceptable href
 			if (Utility.has(state.path, 'mailto:')) return;
 			if (Utility.has(state.path, 'tel:')) return;
