@@ -225,7 +225,7 @@
 	/*
 		@preserve
 		title: rutta
-		version: 1.2.9
+		version: 1.3.0
 		author: alexander elias
 	*/
 
@@ -309,6 +309,10 @@
 
 	Router.prototype.navigate = function (state, type) {
 		var self = this;
+
+		type = type === null || type === undefined ? PUSH : type;
+		state = typeof state === 'string' ? { path: state } : state;
+
 		var route = self.get(state.path);
 
 		self.state.title = route && route.title ? route.title : state.title;
@@ -419,6 +423,9 @@
 	};
 
 	var Rutta = {
+		PUSH: PUSH,
+		REPLACE: REPLACE,
+
 		routers: {},
 		fetch: Axa.request,
 		redirect: function (path) {
